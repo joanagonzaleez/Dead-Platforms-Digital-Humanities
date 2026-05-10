@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dead Platforms — Digital Humanities Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --paper: #f5f0e8;
+  --ink: #1a1410;
+  --red: #c41e0e;
+  --blue: #0a2a6e;
+  --amber: #c88a00;
+  --gray: #7a7268;
+  --light: #e8e2d6;
+  --pixel: #2a5f1e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  cursor: crosshair;
+}
+
+/* ─── SCANLINE OVERLAY ─── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.018) 2px,
+    rgba(0,0,0,0.018) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ─── LOADING SCREEN ─── */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  animation: loaderOut 0.4s ease 2.2s forwards;
+}
+@keyframes loaderOut {
+  to { opacity: 0; pointer-events: none; }
+}
+.loader-text {
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  color: #4aff4a;
+  letter-spacing: 0.1em;
+  animation: blink 0.8s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+.loader-bar-wrap {
+  width: 300px;
+  height: 16px;
+  border: 2px solid #4aff4a;
+  padding: 2px;
+}
+.loader-bar {
+  height: 100%;
+  background: #4aff4a;
+  width: 0%;
+  animation: fillBar 1.8s ease forwards;
+}
+@keyframes fillBar { to { width: 100%; } }
+.loader-pct {
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  color: #4aff4a;
+}
+
+/* ─── TICKER ─── */
+.ticker-wrap {
+  background: var(--ink);
+  overflow: hidden;
+  padding: 0.55rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 3px solid var(--red);
+}
+.ticker-inner {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll 40s linear infinite;
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  color: #4aff4a;
+  letter-spacing: 0.12em;
+}
+@keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border-bottom: 3px solid var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1.2rem 3rem;
+  border-bottom: 1px solid var(--ink);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.hero-topbar-center {
+  font-family: 'VT323', monospace;
+  font-size: 1.3rem;
+  color: var(--red);
+  text-align: center;
+  letter-spacing: 0.25em;
+}
+.hero-topbar-right { text-align: right; }
+
+.hero-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+
+.hero-left {
+  padding: 4rem 3rem;
+  border-right: 1px solid var(--ink);
+  position: relative;
+}
+
+.hero-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.hero-eyebrow::before {
+  content: '▶';
+  animation: pulse 1.2s step-end infinite;
+}
+@keyframes pulse { 50% { opacity: 0; } }
+
+h1 {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 300;
+  font-size: clamp(5rem, 9vw, 8.5rem);
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+h1 .word-dead {
+  display: block;
+  font-style: italic;
+  color: var(--red);
+}
+h1 .word-platforms {
+  display: block;
+}
+
+/* glitch on hover */
+h1:hover .word-dead {
+  animation: glitch 0.3s steps(2) 1;
+}
+@keyframes glitch {
+  0% { transform: translate(0); clip-path: none; }
+  25% { transform: translate(-3px, 1px); color: #0f0; }
+  50% { transform: translate(3px, -1px); color: var(--red); }
+  75% { transform: translate(-1px, 2px); }
+  100% { transform: translate(0); }
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: var(--gray);
+  max-width: 420px;
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.hero-right {
+  padding: 4rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.hero-ascii {
+  font-family: 'VT323', monospace;
+  font-size: 0.85rem;
+  color: var(--pixel);
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  white-space: pre;
+}
+
+.hero-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+}
+.hero-stat {
+  background: var(--paper);
+  padding: 1.2rem;
+}
+.hero-stat-num {
+  font-family: 'VT323', monospace;
+  font-size: 2.8rem;
+  color: var(--red);
+  line-height: 1;
+  display: block;
+}
+.hero-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-top: 0.2rem;
+}
+
+.hero-bottom {
+  padding: 1.2rem 3rem;
+  border-top: 1px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.team-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--gray);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  transition: background 0.2s, color 0.2s;
+}
+.chip:hover { background: var(--ink); color: var(--paper); }
+
+/* ─── SECTIONS ─── */
+section {
+  border-bottom: 3px solid var(--ink);
+}
+
+.section-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  border-bottom: 1px solid var(--ink);
+}
+.section-num {
+  font-family: 'VT323', monospace;
+  font-size: 5rem;
+  line-height: 1;
+  color: var(--light);
+  padding: 1rem 1.5rem;
+  border-right: 1px solid var(--ink);
+  min-width: 110px;
+  text-align: center;
+  align-self: center;
+}
+.section-title-wrap {
+  padding: 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.3rem;
+}
+h2 {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+h2 em { font-style: italic; color: var(--red); }
+
+.section-body {
+  padding: 3rem 4rem;
+}
+
+p {
+  color: #3a3228;
+  margin-bottom: 1.1rem;
+  max-width: 700px;
+}
+p strong { color: var(--ink); font-weight: 600; }
+p em { font-style: italic; color: var(--amber); }
+
+/* ─── INTRO COLUMNS ─── */
+.intro-cols {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.pullquote {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--light);
+  padding: 2rem 0;
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.5;
+  position: relative;
+}
+.pullquote cite {
+  display: block;
+  margin-top: 1rem;
+  font-family: 'Space Mono', monospace;
+  font-style: normal;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.pullquote-big {
+  font-family: 'VT323', monospace;
+  font-size: 8rem;
+  color: var(--red);
+  line-height: 0.8;
+  opacity: 0.15;
+  position: absolute;
+  top: 0.5rem;
+  left: -0.5rem;
+  pointer-events: none;
+}
+
+/* ─── THEORY BLOCKS ─── */
+.theory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.theory-block {
+  background: var(--paper);
+  padding: 2rem;
+}
+.theory-icon {
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  color: var(--red);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.theory-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.8rem;
+  border-bottom: 1px dashed var(--light);
+  padding-bottom: 0.5rem;
+}
+.theory-block p {
+  font-size: 0.9rem;
+  max-width: none;
+  color: var(--gray);
+}
+.theory-source {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  margin-top: 1rem;
+  border-left: 2px solid var(--amber);
+  padding-left: 0.6rem;
+}
+
+/* ─── ENSHIT CYCLE ─── */
+.cycle-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 2rem;
+  position: relative;
+}
+.cycle-wrap::before {
+  content: '→';
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  color: var(--light);
+  position: absolute;
+  left: 33.3%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.cycle-wrap::after {
+  content: '→';
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  color: var(--light);
+  position: absolute;
+  left: 66.6%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.cycle-phase {
+  border: 1px solid var(--ink);
+  border-right: none;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.cycle-phase:last-child { border-right: 1px solid var(--ink); }
+.cycle-phase-n {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 0.5rem;
+}
+.cycle-phase-t {
+  font-family: 'Crimson Pro', serif;
+  font-style: italic;
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+}
+.cycle-phase:nth-child(1) .cycle-phase-t { color: var(--pixel); }
+.cycle-phase:nth-child(2) .cycle-phase-t { color: var(--amber); }
+.cycle-phase:nth-child(3) .cycle-phase-t { color: var(--red); }
+.cycle-phase p { font-size: 0.85rem; color: var(--gray); max-width: none; margin: 0; }
+
+/* ─── PLATFORM CARDS ─── */
+.platforms-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.platform {
+  background: var(--paper);
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  transition: background 0.25s;
+}
+.platform:hover { background: #f0ebe0; }
+
+.platform-head {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--light);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.platform-name-wrap {}
+.platform-years {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 0.2rem;
+}
+.platform-name {
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+}
+.plat-geocities .platform-name { color: #c88000; }
+.plat-myspace .platform-name { color: #4a2080; }
+.plat-vine .platform-name { color: #00a070; }
+.plat-googleplus .platform-name { color: var(--red); }
+.plat-msn .platform-name { color: #1560b0; }
+.plat-flash .platform-name { color: #c04010; }
+
+.platform-badge {
+  font-family: 'VT323', monospace;
+  font-size: 0.9rem;
+  color: var(--paper);
+  background: var(--red);
+  padding: 0.1rem 0.4rem;
+  letter-spacing: 0.1em;
+}
+.plat-geocities .platform-badge { background: #c88000; }
+.plat-myspace .platform-badge { background: #4a2080; }
+.plat-vine .platform-badge { background: #00a070; }
+.plat-googleplus .platform-badge { background: var(--red); }
+.plat-msn .platform-badge { background: #1560b0; }
+.plat-flash .platform-badge { background: #c04010; }
+
+.platform-body-text {
+  padding: 1.2rem 2rem;
+}
+.platform-tagline {
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--gray);
+  margin-bottom: 1rem;
+  border-left: 2px solid var(--light);
+  padding-left: 0.8rem;
+}
+.platform-body-text p {
+  font-size: 0.9rem;
+  max-width: none;
+  color: #4a4038;
+}
+
+.platform-foot {
+  padding: 1rem 2rem 1.5rem;
+  border-top: 1px solid var(--light);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ptag {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--light);
+  padding: 0.15rem 0.45rem;
+  color: var(--gray);
+}
+
+/* ─── LOST CULTURE ─── */
+.lost-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.lost-col {
+  padding: 2rem;
+}
+.lost-col:first-child {
+  border-right: 1px solid var(--ink);
+}
+.lost-col-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--light);
+}
+.lost-item {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.88rem;
+  color: #5a5048;
+  align-items: start;
+}
+.lost-item::before { content: '—'; color: var(--red); }
+
+/* ─── TIMELINE ─── */
+.timeline-wrap {
+  margin-top: 2rem;
+  position: relative;
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 2rem;
+  margin-bottom: 0;
+  border-top: 1px solid var(--light);
+  padding: 1.2rem 0;
+  align-items: start;
+}
+.tl-item:last-child { border-bottom: 1px solid var(--light); }
+.tl-year {
+  font-family: 'VT323', monospace;
+  font-size: 2.2rem;
+  color: var(--red);
+  line-height: 1;
+  text-align: right;
+  padding-right: 1.5rem;
+  border-right: 2px solid var(--red);
+}
+.tl-text {
+  font-size: 0.9rem;
+  color: var(--gray);
+  padding-top: 0.3rem;
+}
+.tl-text strong { color: var(--ink); font-weight: 600; }
+
+/* ─── MANIFESTO ─── */
+.manifesto-wrap {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 3rem 4rem;
+  margin-top: 2rem;
+}
+.manifesto-wrap h3 {
+  font-family: 'VT323', monospace;
+  font-size: 2.5rem;
+  letter-spacing: 0.1em;
+  color: #4aff4a;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1rem;
+}
+.manifesto-list {
+  list-style: none;
+  counter-reset: man;
+}
+.manifesto-list li {
+  counter-increment: man;
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.95rem;
+  color: #c8c0b0;
+  align-items: start;
+  line-height: 1.6;
+}
+.manifesto-list li::before {
+  content: counter(man, decimal-leading-zero);
+  font-family: 'VT323', monospace;
+  font-size: 1.8rem;
+  color: #4aff4a;
+  line-height: 1;
+}
+.manifesto-list li strong { color: var(--paper); }
+
+/* ─── METHODOLOGY ─── */
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.method-block {
+  background: var(--paper);
+  padding: 1.8rem;
+}
+.method-n {
+  font-family: 'VT323', monospace;
+  font-size: 4rem;
+  color: var(--light);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.method-t {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 0.7rem;
+}
+.method-block p {
+  font-size: 0.82rem;
+  color: var(--gray);
+  max-width: none;
+  margin: 0;
+}
+
+/* ─── REFERENCES ─── */
+.refs-list {
+  counter-reset: refs;
+  margin-top: 1.5rem;
+  border: 1px solid var(--light);
+}
+.ref-item {
+  counter-increment: refs;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0;
+  font-size: 0.82rem;
+  color: var(--gray);
+  border-bottom: 1px solid var(--light);
+  align-items: stretch;
+}
+.ref-item:last-child { border-bottom: none; }
+.ref-item::before {
+  content: counter(refs);
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  color: var(--red);
+  padding: 0.8rem;
+  border-right: 1px solid var(--light);
+  text-align: center;
+  background: #f8f4ec;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ref-text {
+  padding: 0.8rem 1rem;
+  line-height: 1.5;
+}
+.ref-text em { font-style: italic; color: var(--ink); }
+.ref-text strong { color: var(--gray); font-weight: 400; }
+.ref-class {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--red);
+  color: var(--paper);
+  padding: 0.1rem 0.35rem;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+}
+
+/* ─── TEAM & FOOTER ─── */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.team-member {
+  background: var(--paper);
+  padding: 1.5rem;
+  transition: background 0.2s;
+}
+.team-member:hover { background: var(--light); }
+.member-initial {
+  font-family: 'VT323', monospace;
+  font-size: 4rem;
+  color: var(--light);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.member-name {
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.1rem;
+}
+.member-role {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+footer {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 2.5rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4rem;
+  align-items: end;
+  border-top: 3px solid var(--red);
+}
+.footer-left {}
+.footer-project {
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  letter-spacing: 0.05em;
+  color: var(--paper);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.footer-project span { color: var(--red); }
+.footer-uni {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #6a6258;
+  margin-bottom: 1rem;
+}
+.footer-copy {
+  font-size: 0.8rem;
+  color: #6a6258;
+  font-style: italic;
+}
+.footer-right {
+  text-align: right;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: #4a4238;
+  line-height: 2;
+  text-transform: uppercase;
+}
+.footer-right a { color: #4aff4a; text-decoration: none; }
+.footer-right a:hover { text-decoration: underline; }
+
+/* ─── SCROLL ANIMATIONS ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .hero-main { grid-template-columns: 1fr; }
+  .hero-left { border-right: none; border-bottom: 1px solid var(--ink); }
+  .intro-cols, .lost-cols, .platforms-wrap { grid-template-columns: 1fr; }
+  .lost-col:first-child { border-right: none; border-bottom: 1px solid var(--ink); }
+  .theory-grid, .method-grid { grid-template-columns: 1fr; }
+  .cycle-wrap { grid-template-columns: 1fr; }
+  .cycle-wrap::before, .cycle-wrap::after { display: none; }
+  .team-grid { grid-template-columns: 1fr 1fr; }
+  .section-body { padding: 2rem; }
+  footer { grid-template-columns: 1fr; }
+  .hero-topbar { grid-template-columns: 1fr; gap: 0.5rem; padding: 1rem 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-text">LOADING DEAD_PLATFORMS.EXE...</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-pct">PLEASE WAIT</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    ◆ GeoCities: 38 million pages deleted — 2009 &nbsp;&nbsp; ◆ MySpace: 50 million songs lost — 2019 &nbsp;&nbsp; ◆ Vine: 6 seconds. A new art form. Gone. — 2017 &nbsp;&nbsp; ◆ Google+: 500k data breach, 7 months hidden — 2019 &nbsp;&nbsp; ◆ MSN Messenger: billions of conversations — 2013 &nbsp;&nbsp; ◆ Adobe Flash: EOL, 2 million works inaccessible — 2020 &nbsp;&nbsp; ◆ ERROR 404: CULTURE NOT FOUND &nbsp;&nbsp; ◆ GeoCities: 38 million pages deleted — 2009 &nbsp;&nbsp; ◆ MySpace: 50 million songs lost — 2019 &nbsp;&nbsp; ◆ Vine: 6 seconds. A new art form. Gone. — 2017 &nbsp;&nbsp; ◆ Google+: 500k data breach, 7 months hidden — 2019 &nbsp;&nbsp; ◆ MSN Messenger: billions of conversations — 2013 &nbsp;&nbsp; ◆ Adobe Flash: EOL, 2 million works inaccessible — 2020 &nbsp;&nbsp; ◆ ERROR 404: CULTURE NOT FOUND &nbsp;&nbsp;
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-topbar">
+    <div>Digital Humanities · DH2025 · Team Project</div>
+    <div class="hero-topbar-center">ERROR_404.EXE</div>
+    <div class="hero-topbar-right">Universidad de Deusto · June 2026</div>
+  </div>
+
+  <div class="hero-main">
+    <div class="hero-left">
+      <div class="hero-eyebrow">A cultural archaeology of the web</div>
+      <h1>
+        <span class="word-dead">Dead</span>
+        <span class="word-platforms">Platforms</span>
+      </h1>
+      <p class="hero-sub">When a platform dies, does its culture die with it? This project archives the human worlds that lived inside forgotten digital spaces — and asks who decided to pull the plug.</p>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-ascii">
+  ██████  ███████  █████  ██████
+  ██   ██ ██      ██   ██ ██   ██
+  ██   ██ █████   ███████ ██   ██
+  ██   ██ ██      ██   ██ ██   ██
+  ██████  ███████ ██   ██ ██████
+
+  ██████  ██   ████████
+  ██   ██ ██      ██
+  ██████  ██      ██
+  ██   ██ ██      ██
+  ██   ██ ███████ ██
+      </div>
+
+      <div class="hero-stat-grid">
+        <div class="hero-stat">
+          <span class="hero-stat-num">38M</span>
+          <div class="hero-stat-label">GeoCities pages erased</div>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">50M</span>
+          <div class="hero-stat-label">MySpace songs lost forever</div>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">6</span>
+          <div class="hero-stat-label">Seconds. Vine's entire art form</div>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">6</span>
+          <div class="hero-stat-label">Platforms. Six lost worlds.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-bottom">
+    <div>
+      <div style="margin-bottom:0.4rem;">Team members</div>
+      <div class="team-chips">
+        <span class="chip">Irene Olazar</span>
+        <span class="chip">Asier López de Argumendo</span>
+        <span class="chip">Joana González</span>
+        <span class="chip">Estela Samper</span>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div>Universidad de Deusto</div>
+      <div style="margin-top:0.3rem; color: var(--red);">Deadline: 8 June 2026</div>
+    </div>
+  </div>
+</header>
+
+<!-- 00 INTRODUCTION -->
+<section>
+  <div class="section-header">
+    <div class="section-num">00</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Introduction</div>
+      <h2>The Internet <em>Forgets</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="intro-cols reveal">
+      <div>
+        <p>Between 1994 and today, hundreds of digital platforms have been born, flourished, and died. Each one was not merely a service — it was a <strong>social world</strong>: a place where people built identities, friendships, art, and communities.</p>
+        <p>When GeoCities closed in 2009, <strong>38 million user-made pages</strong> disappeared overnight. When MySpace "migrated" its servers in 2019, an estimated <em>50 million songs</em> by 14 million artists were erased with no warning. When Vine shut down in 2017, a genuinely new form of creative expression — the 6-second loop — lost its home.</p>
+        <p>This project applies the tools of <strong>Digital Humanities</strong> — curation, cultural analysis, archival practice, and critical theory — to document what was lost, why it was lost, and what it means that these decisions were made by corporations, not communities.</p>
+        <p>Our original contribution is not technical history. Wikipedia already has that. What it does not have is <strong>humanistic analysis</strong>: what aesthetics emerged on each platform? What social rituals? What economic logic ended them? These are the questions we answer.</p>
+      </div>
+      <div>
+        <div class="pullquote reveal">
+          <div class="pullquote-big">"</div>
+          Curation also implies custodial responsibilities with respect to the remains of the past as well as interpretive, meaning-making responsibilities with respect to the present and future.
+          <cite>— Digital Humanities Manifesto 2.0 (2009)</cite>
+        </div>
+        <div class="pullquote reveal" style="margin-top:2rem;">
+          Less than 1% of the Smithsonian Institution's permanent collection is on view to visitors; less than 10% of an average research library's books are ever consulted.
+          <cite>— Digital Humanities Manifesto 2.0, on the urgency of curation</cite>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 THEORY -->
+<section>
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Theoretical Framework</div>
+      <h2>How We <em>Read Ruins</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>Three interlocking lenses — all grounded in the course readings — shape our analysis of every platform in this archive.</p>
+    <div class="theory-grid reveal">
+      <div class="theory-block">
+        <div class="theory-icon">∅</div>
+        <div class="theory-name">Enshittification</div>
+        <p>Cory Doctorow's model: platforms first serve users, then advertisers, then extract maximum value and collapse. Dead platforms are enshittification's end state — what remains when extraction is complete and the host abandoned.</p>
+        <div class="theory-source">Doctorow — "The Enshittification of TikTok" (Wired) · explored in class</div>
+      </div>
+      <div class="theory-block">
+        <div class="theory-icon">⛏</div>
+        <div class="theory-name">Data Extractivism</div>
+        <p>The Cartography of Generative AI maps how user-created culture is extracted as raw material for corporate and AI systems. Dead platforms are the clearest case: users built the culture, the corporation owned the infrastructure, and when the deal ended, users got nothing back.</p>
+        <div class="theory-source">@tallerestampa — Cartography of Generative AI (2024) · explored in class</div>
+      </div>
+      <div class="theory-block">
+        <div class="theory-icon">✦</div>
+        <div class="theory-name">Curation as Scholarship</div>
+        <p>The DH Manifesto 2.0 argues curation is knowledge production equal to writing. Archiving dead platforms is not nostalgia — it is a humanistic act that recovers meaning, documents culture, and challenges the corporate authority to erase history.</p>
+        <div class="theory-source">DH Manifesto 2.0 (2009) · explored in class</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 01b ENSHITTIFICATION -->
+<section>
+  <div class="section-header">
+    <div class="section-num">01b</div>
+    <div class="section-title-wrap">
+      <div class="section-label">The Enshittification Cycle</div>
+      <h2>Platforms Are <em>Designed to Die</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>Doctorow's framework describes a predictable arc. Every platform in this archive followed it without exception.</p>
+    <div class="cycle-wrap reveal">
+      <div class="cycle-phase">
+        <div class="cycle-phase-n">Phase One</div>
+        <div class="cycle-phase-t">Serve Users</div>
+        <p>The platform offers genuine value. Communities form. Culture is created. People invest their time, creativity, identity. GeoCities gives everyone a homepage. Vine gives everyone an audience.</p>
+      </div>
+      <div class="cycle-phase">
+        <div class="cycle-phase-n">Phase Two</div>
+        <div class="cycle-phase-t">Serve Advertisers</div>
+        <p>The platform optimises for advertisers over users. Algorithms change. Visibility becomes pay-to-play. The culture that made the platform valuable is gradually subordinated to engagement metrics and monetisation imperatives.</p>
+      </div>
+      <div class="cycle-phase">
+        <div class="cycle-phase-n">Phase Three</div>
+        <div class="cycle-phase-t">Extract & Collapse</div>
+        <p>The platform extracts maximum value and shuts down — or is absorbed, or pivots. Communities have no legal claim to their content, no right to their data, no say in the decision. The culture evaporates.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 CASE STUDIES -->
+<section>
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Case Studies</div>
+      <h2>Six <em>Lost Worlds</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>Each team member adopted one platform. Analysis follows a consistent methodology: technical history, cultural emergence, enshittification arc, and what was irretrievably lost.</p>
+    <div class="platforms-wrap reveal">
+
+      <!-- GeoCities -->
+      <div class="platform plat-geocities">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">1994 — 2009 · Yahoo</div>
+            <div class="platform-name">GeoCities</div>
+          </div>
+          <div class="platform-badge">DELETED</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">"Build Your Own Neighborhood on the Web"</div>
+          <p>GeoCities gave ordinary people — not programmers, not corporations — the power to publish themselves online. Users organised into themed "neighborhoods": Hollywood, Athens (education), Area51 (the strange). The visual vernacular it produced — tiled backgrounds, animated GIFs, visitor counters, MIDI autoplay — was the <strong>first genuinely democratic visual language of the web</strong>. Messy, personal, alive.</p>
+          <p>When Yahoo acquired GeoCities for $3.57 billion and shut it in 2009, 38 million pages were deleted. The Archive Team saved much of the data — but the neighborhoods, the community structure, the social context: gone. GeoCities was the direct ancestor of every social media profile that followed.</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">Self-expression</span>
+          <span class="ptag">Visual vernacular</span>
+          <span class="ptag">Yahoo acquisition</span>
+          <span class="ptag">38M pages erased</span>
+          <span class="ptag">Digital democracy</span>
+        </div>
+      </div>
+
+      <!-- MySpace -->
+      <div class="platform plat-myspace">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">2003 — 2019 (music loss)</div>
+            <div class="platform-name">MySpace</div>
+          </div>
+          <div class="platform-badge">LOST</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">"A Place for Friends" — and for every band that ever mattered</div>
+          <p>Before Spotify, before SoundCloud, MySpace Music was where independent musicians existed. Between 2003 and 2010, a MySpace page was not optional — it was your career. In 2019, during a server migration, MySpace announced all music uploaded before 2015 — <strong>an estimated 50 million songs by 14 million artists</strong> — had been permanently lost.</p>
+          <p>No warning. No recovery. These were not commercial recordings with backup copies. These were demos, live recordings, debut songs by artists who never released elsewhere. From a Digital Humanities perspective, this is one of the <em>largest single acts of cultural erasure in history</em> — performed not by censorship or disaster, but by corporate negligence.</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">Independent music</span>
+          <span class="ptag">Cultural erasure</span>
+          <span class="ptag">Corporate negligence</span>
+          <span class="ptag">50M songs</span>
+        </div>
+      </div>
+
+      <!-- Vine -->
+      <div class="platform plat-vine">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">2012 — 2017 · Twitter</div>
+            <div class="platform-name">Vine</div>
+          </div>
+          <div class="platform-badge">CLOSED</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">Six seconds. A new art form. Gone.</div>
+          <p>Vine was not merely a video platform. It was the incubator of a genuinely new creative form: the 6-second loop. Within that constraint, creators developed a new comedic and narrative grammar — precise timing, visual callbacks, sound design as punchline, the loop as structure.</p>
+          <p>Vine gave rise to a generation of creators — many of them Black and brown — who invented the memes, dances, and comedic styles that TikTok and Instagram Reels later absorbed and profited from, <strong>without credit or compensation</strong>. This is data extractivism in its purest cultural form: <em>the culture migrated, the creators did not</em>. Twitter acquired Vine, failed to monetise it, and shut it down in 2017.</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">New art form</span>
+          <span class="ptag">Black creators</span>
+          <span class="ptag">Cultural extraction</span>
+          <span class="ptag">Loop grammar</span>
+        </div>
+      </div>
+
+      <!-- Google+ -->
+      <div class="platform plat-googleplus">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">2011 — 2019 · Google</div>
+            <div class="platform-name">Google+</div>
+          </div>
+          <div class="platform-badge">SHUT</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">The platform that proved scale cannot manufacture community</div>
+          <p>Google+ is the rare case of a platform whose death teaches us what makes digital communities work. Despite Google's resources and 2 billion+ Gmail users nudged toward it, Google+ never achieved genuine community formation. The DH Manifesto 2.0 argues that collaborative culture requires communities of practice with their own standards and norms. Google+ was <strong>top-down</strong>: imposed on users rather than grown by them.</p>
+          <p>When a data breach exposed 500,000 user records in 2018, Google chose not to disclose it for seven months. The platform shut in 2019. Its obituary is a lesson in the difference between a platform and a community — and why the former cannot create the latter by decree.</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">Platform vs community</span>
+          <span class="ptag">Privacy failure</span>
+          <span class="ptag">Top-down design</span>
+          <span class="ptag">Data breach</span>
+        </div>
+      </div>
+
+      <!-- MSN Messenger -->
+      <div class="platform plat-msn">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">1999 — 2013 · Microsoft</div>
+            <div class="platform-name">MSN Messenger</div>
+          </div>
+          <div class="platform-badge">GONE</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">Where a generation first learned to be someone online</div>
+          <p>For an entire generation in Europe and Latin America, MSN Messenger was the internet. Before smartphones, before social media — MSN was where teenagers came home from school and immediately sat down to continue conversations, to share music files, to build the first versions of their digital selves.</p>
+          <p>The cultural practices that emerged — the carefully crafted "personal message" (precursor to the tweet), the nudge as social gesture, the display picture as identity performance — were among the <strong>first mass digital social rituals</strong>. Microsoft killed MSN in 2013 in favour of Skype. No archive was preserved. The conversations — billions of them — are gone.</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">Digital identity</span>
+          <span class="ptag">Social ritual</span>
+          <span class="ptag">Personal message</span>
+          <span class="ptag">Generation X/Y</span>
+        </div>
+      </div>
+
+      <!-- Flash -->
+      <div class="platform plat-flash">
+        <div class="platform-head">
+          <div class="platform-name-wrap">
+            <div class="platform-years">1996 — 2020 · Adobe</div>
+            <div class="platform-name">Adobe Flash</div>
+          </div>
+          <div class="platform-badge">KILLED</div>
+        </div>
+        <div class="platform-body-text">
+          <div class="platform-tagline">The medium that made the early web weird, creative, and alive</div>
+          <p>Flash's death was deliberate, ideological, and coordinated. Steve Jobs declared war on Flash in his 2010 "Thoughts on Flash" letter — citing technical reasons, but the subtext was platform control: Apple wanted to own the mobile creative ecosystem.</p>
+          <p>What died was an entire era of web creativity: Homestar Runner, Newgrounds, thousands of experimental interactive artworks and browser games by independent creators worldwide. These works <strong>cannot be run in modern browsers</strong> without emulators. The Ruffle emulator project and Flashpoint Archive are heroic preservation efforts — precisely the kind of <em>guerrilla curation</em> the DH Manifesto 2.0 calls for. Flash's death raises the hardest question in digital preservation: what do you do when the format itself becomes illegal to run?</p>
+        </div>
+        <div class="platform-foot">
+          <span class="ptag">Platform control</span>
+          <span class="ptag">Apple vs Adobe</span>
+          <span class="ptag">Ruffle emulator</span>
+          <span class="ptag">Flashpoint Archive</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 03 WHAT WAS LOST -->
+<section>
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Cultural Archaeology</div>
+      <h2>What We <em>Actually Lost</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>The technical history of platform death is documented. What is not documented — and what this project contributes — is the cultural inventory of what disappeared.</p>
+    <div class="lost-cols reveal">
+      <div class="lost-col">
+        <div class="lost-col-title">Lost Aesthetic Forms</div>
+        <div class="lost-item">GeoCities' tiled backgrounds, animated GIFs, guestbook culture — the first democratic visual language of the web, created by non-designers</div>
+        <div class="lost-item">Vine's 6-second comedic grammar — timing, callback, loop as structure — an entirely original narrative form with no successor</div>
+        <div class="lost-item">Flash's interactive experimental artworks — browser games, animated shorts, interactive fiction that cannot be run today without specialist tools</div>
+        <div class="lost-item">MSN Messenger's "personal message" — the first mass practice of the micro-status update, direct predecessor of the tweet and the Instagram bio</div>
+        <div class="lost-item">MySpace's profile HTML customisation — the only major platform that ever allowed users to redesign their own page completely</div>
+      </div>
+      <div class="lost-col">
+        <div class="lost-col-title">Lost Social Worlds</div>
+        <div class="lost-item">GeoCities' themed neighborhoods — the first attempt to organise the web spatially around community identity, anticipating Reddit and Facebook Groups</div>
+        <div class="lost-item">14 million independent musicians' entire recorded output on MySpace — no backup, no recovery, no accountability</div>
+        <div class="lost-item">The Vine creator community — predominantly Black and brown artists whose innovations were absorbed by TikTok without credit or compensation</div>
+        <div class="lost-item">MSN Messenger conversation histories — billions of exchanges that formed the first written record of adolescent digital sociality in history</div>
+        <div class="lost-item">Newgrounds' ecosystem — a generation of animators, game designers, and musicians who trained on Flash, now without a public portfolio</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 TIMELINE -->
+<section>
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Timeline of Loss</div>
+      <h2>A Calendar <em>of Erasure</em></h2>
+    </div>
+  </div>
+  <div class="section-body reveal">
+    <div class="timeline-wrap">
+      <div class="tl-item">
+        <div class="tl-year">1999</div>
+        <div class="tl-text"><strong>Yahoo acquires GeoCities</strong> for $3.57 billion. The beginning of the end for the web's first democratic publishing platform. The acquisition logic: the community has value, but the community is not the point.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2009</div>
+        <div class="tl-text"><strong>GeoCities shut down</strong> (October 26). 38 million user pages deleted overnight. The Archive Team races to save what it can — mostly succeeding technically. But the neighborhoods, the community, the context: gone.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2010</div>
+        <div class="tl-text"><strong>Steve Jobs publishes "Thoughts on Flash."</strong> The death warrant for the technology that made the early web creative. Within a decade, Flash-based works become inaccessible in all major browsers — an entire era of creative culture rendered unreachable.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2013</div>
+        <div class="tl-text"><strong>Microsoft kills MSN Messenger</strong>, migrating users to Skype. Billions of conversations — the first mass written record of digital adolescent sociality — are not archived. Twitter acquires Vine in October for $30 million.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2017</div>
+        <div class="tl-text"><strong>Vine shuts down</strong> (January 17). A partial archive at vine.co is preserved, but the algorithmic discovery, the trending culture, the community itself: dissolved. Creators watch TikTok replicate their innovations — without credit.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2019</div>
+        <div class="tl-text"><strong>MySpace confirms loss of 50 million songs</strong> during a server migration. No warning. No recovery. The largest single act of musical erasure in history, performed not by war or censorship but by a botched IT migration. Google+ also closes in April.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2020</div>
+        <div class="tl-text"><strong>Adobe Flash End of Life</strong> (December 31). All major browsers block Flash content. An estimated 2–3 million Flash-based artworks, games, and interactive works become inaccessible without specialist emulators like Ruffle.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2026</div>
+        <div class="tl-text"><strong>This project published.</strong> Some of this history is being written for the first time, from a humanistic perspective — by a team at the Universidad de Deusto, following the call of the DH Manifesto 2.0 to produce new scholarship, not Wikipedia translations.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 MANIFESTO -->
+<section>
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Our Position</div>
+      <h2>What We <em>Believe</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>Following the DH Manifesto 2.0's call for position-taking and not merely description — here is ours.</p>
+    <div class="manifesto-wrap reveal">
+      <h3>A MINI-MANIFESTO ON PLATFORM DEATH</h3>
+      <ol class="manifesto-list">
+        <li><strong>Digital culture is culture.</strong> The conversations on MSN, the songs on MySpace, the animations on Newgrounds, the pages on GeoCities — these are as worthy of preservation as any archive of print, film, or broadcast media.</li>
+        <li><strong>Platform owners do not own the cultures their platforms host.</strong> The terms of service said they did. The terms of service were wrong.</li>
+        <li><strong>The decision to shut a platform is a public decision.</strong> It should not be made unilaterally by a corporation. It has public consequences and should require public accountability, public consultation, and public archiving obligations.</li>
+        <li><strong>Curation is scholarship.</strong> Following the DH Manifesto 2.0: archiving dead platforms is not nostalgia. This project is scholarship. Writing humanistic analysis that does not yet exist is a contribution to knowledge.</li>
+        <li><strong>Enshittification is a business model, not a law of nature.</strong> Co-operatively owned platforms, non-profit infrastructure, and open protocols are possible. The death of these platforms is the predictable outcome of a specific economic logic — not an inevitability.</li>
+        <li><strong>The creators deserve credit.</strong> The Black creators on Vine who invented the dances TikTok monetised. The musicians on MySpace whose recordings are now gone. The teenagers on MSN whose first attempts at self-expression were treated as worthless data.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- 06 METHODOLOGY -->
+<section>
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Methodology</div>
+      <h2>How We <em>Did This</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>Our methodology combines digital archival research, cultural analysis, and humanistic close reading. Each step is documented and reproducible by other researchers.</p>
+    <div class="method-grid reveal">
+      <div class="method-block">
+        <div class="method-n">01</div>
+        <div class="method-t">Platform Selection</div>
+        <p>Each team member selected one platform based on cultural significance, degree of cultural loss, and availability of sources. Priority given to platforms where the human cost of deletion is under-documented.</p>
+      </div>
+      <div class="method-block">
+        <div class="method-n">02</div>
+        <div class="method-t">Source Archaeology</div>
+        <p>Research used: the Internet Archive (archive.org), the Archive Team's GeoCities torrent, academic platform studies, journalism, and first-person accounts from former users in community forums and Reddit archives.</p>
+      </div>
+      <div class="method-block">
+        <div class="method-n">03</div>
+        <div class="method-t">Cultural Analysis</div>
+        <p>Three lenses applied to every platform: enshittification (Doctorow), data extractivism (Cartography of GenAI), and curation as scholarship (DH Manifesto 2.0). Focus: what aesthetic forms emerged, who created them, who profited, and who decided to end it.</p>
+      </div>
+      <div class="method-block">
+        <div class="method-n">04</div>
+        <div class="method-t">Web Publication</div>
+        <p>Research published as this open-access website, freely readable and shareable under CC BY-SA 4.0. The site is itself a demonstration of DH practice: using digital tools to produce and disseminate humanistic knowledge publicly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 TEAM -->
+<section>
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title-wrap">
+      <div class="section-label">The Team</div>
+      <h2>Who Made <em>This</em></h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <p>A four-person team from the Universidad de Deusto, Digital Humanities module DH2025.</p>
+    <div class="team-grid reveal">
+      <div class="team-member">
+        <div class="member-initial">IO</div>
+        <div class="member-name">Irene Olazar</div>
+        <div class="member-role">GeoCities & MSN Messenger</div>
+      </div>
+      <div class="team-member">
+        <div class="member-initial">AL</div>
+        <div class="member-name">Asier López de Argumendo</div>
+        <div class="member-role">MySpace & Theory</div>
+      </div>
+      <div class="team-member">
+        <div class="member-initial">JG</div>
+        <div class="member-name">Joana González</div>
+        <div class="member-role">Vine & Cultural Analysis</div>
+      </div>
+      <div class="team-member">
+        <div class="member-initial">ES</div>
+        <div class="member-name">Estela Samper</div>
+        <div class="member-role">Google+ & Adobe Flash</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 REFERENCES -->
+<section>
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-title-wrap">
+      <div class="section-label">References</div>
+      <h2>Where This <em>Comes From</em></h2>
+    </div>
+  </div>
+  <div class="section-body reveal">
+    <p>All theoretical sources were explored in the DH2025 module. Primary sources are original archival materials.</p>
+    <div class="refs-list">
+      <div class="ref-item"><div class="ref-text"><em>Digital Humanities Manifesto 2.0</em> (2009). UCLA. Core framework for curation as scholarship, Wikipedia as model, open knowledge production. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">Doctorow, C. (2023). <em>"The Enshittification of TikTok."</em> <strong>Wired.</strong> Platform lifecycle theory applied to all six case studies. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">@tallerestampa (2024). <em>Cartography of Generative AI.</em> Data extractivism, digital colonialism, corporate ownership of user-generated culture. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">Kirschenbaum, M. (2014). <em>"What Is 'Digital Humanities,' and Why Are They Saying Such Terrible Things about It?"</em> <strong>differences 25.1.</strong> DH as "actually existing work." <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">Hartmann, F. (ed.). <em>Sociomedia: Multimedia, Hypermedia, and the Social Dimensions of Media.</em> Social meaning as embedded in media context; what is lost when media dies. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">Narayanan, A. &amp; Kapoor, S. (2024). <em>"AI Scaling Myths."</em> Relevant to the broader critique of technological determinism shaping platform decisions. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">THATCamp Paris (2010). <em>Manifesto for the Digital Humanities.</em> Supplementary DH framework on open, collaborative knowledge production. <span class="ref-class">class</span></div></div>
+      <div class="ref-item"><div class="ref-text">Archive Team (2009–ongoing). <em>GeoCities Archive.</em> archive.org — Primary source for GeoCities case study. Over 650GB of saved pages.</div></div>
+      <div class="ref-item"><div class="ref-text">Flashpoint Archive (2018–ongoing). flashpointarchive.org — Primary source for Flash case study; over 100,000 preserved Flash works.</div></div>
+      <div class="ref-item"><div class="ref-text">Jobs, S. (2010). <em>"Thoughts on Flash."</em> Apple.com — Primary source for Flash case study; the corporate logic of technological exclusion.</div></div>
+      <div class="ref-item"><div class="ref-text">Tiffany, K. (2019). <em>"MySpace Lost 12 Years Worth of Music."</em> <strong>The Atlantic.</strong> — Source for MySpace music loss documentation and timeline.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-project">DEAD<span>PLATFORMS</span></div>
+    <div class="footer-uni">Universidad de Deusto · Digital Humanities · DH2025</div>
+    <div class="footer-copy">Irene Olazar, Asier López de Argumendo, Joana González & Estela Samper · June 2026</div>
+    <div style="margin-top:1.2rem;">
+      <span class="chip" style="border-color:#4a4238;color:#6a6258;font-size:0.52rem;font-family:'Space Mono',monospace;letter-spacing:0.1em;">CC BY-SA 4.0 — Free to share & adapt with attribution</span>
+    </div>
+  </div>
+  <div class="footer-right">
+    <div>Internet Archive</div>
+    <div><a href="https://archive.org/details/geocities" target="_blank">archive.org/geocities</a></div>
+    <div style="margin-top:0.5rem;">Flashpoint Archive</div>
+    <div><a href="https://flashpointarchive.org" target="_blank">flashpointarchive.org</a></div>
+    <div style="margin-top:0.5rem;">Archive Team</div>
+    <div><a href="https://archiveteam.org" target="_blank">archiveteam.org</a></div>
+    <div style="margin-top:1rem;color:#2a2a2a;font-size:0.5rem;">ERROR 404: CULTURE NOT FOUND</div>
+  </div>
+</footer>
+
+<script>
+  // Loader counter
+  let pct = 0;
+  const pctEl = document.querySelector('.loader-pct');
+  const iv = setInterval(() => {
+    pct = Math.min(pct + Math.floor(Math.random() * 12) + 3, 100);
+    if (pctEl) pctEl.textContent = pct + '% LOADED';
+    if (pct >= 100) clearInterval(iv);
+  }, 100);
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(r => obs.observe(r));
+
+  // Glitch effect on section numbers randomly
+  const nums = document.querySelectorAll('.section-num');
+  setInterval(() => {
+    const n = nums[Math.floor(Math.random() * nums.length)];
+    n.style.color = '#c41e0e';
+    n.style.textShadow = '2px 0 #4aff4a, -2px 0 #0ff';
+    setTimeout(() => {
+      n.style.color = '';
+      n.style.textShadow = '';
+    }, 120);
+  }, 3000);
+</script>
+</body>
+</html>
